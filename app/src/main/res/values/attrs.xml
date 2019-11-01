@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="PinView">
+        <attr name="spaceBetweenCircles" format="dimension" />
+        <attr name="countOfCircles" format="integer" />
+        <attr name="radius" format="dimension" />
+        <attr name="color_in_focus" format="color" />
+        <attr name="color_entered" format="color" />
+        <attr name="color_empty" format="color" />
+        <attr name="fitToScreen" format="boolean" />
+    </declare-styleable>
+</resources>

@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">PinView</string>
+    <string name="send_code">Выслать код</string>
+    <string name="fish">Выслать пароль ещё раз</string>
+</resources>
