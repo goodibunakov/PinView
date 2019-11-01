@@ -19,7 +19,7 @@ import androidx.core.content.withStyledAttributes
 import android.text.InputFilter
 import android.text.InputType
 import android.text.TextWatcher
-import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.AccelerateInterpolator
 import kotlin.math.min
 
 
@@ -40,18 +40,20 @@ class PinView @JvmOverloads constructor(
         fun pinNotEntered()
     }
 
-    private val SPACE = 100f
-    private val RADIUS = 100f
-    private val COUNT = 4
+    private val SPACE = 10f
+    private val RADIUS = 40f
+    private var animator: ValueAnimator? = null
     var callback: PinEnterCallback? = null
 
     var colorInFocus = 0
     var colorEntered = 0
     var colorEmpty = 0
     var radius = 0f
+    var radiusCurrent = 0f
     var countOfCircles = 0
     var spaceBetweenCircles = 1f
     var fitToScreen = false
+    var animate = false
     var dxStart = 0f
     private var paint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
@@ -67,6 +69,7 @@ class PinView @JvmOverloads constructor(
         isCursorVisible = false
         inputType = InputType.TYPE_CLASS_NUMBER
         setRawInputType(InputType.TYPE_CLASS_NUMBER)
+        onFocusChangeListener = this
 
         context.withStyledAttributes(attrs, R.styleable.PinView) {
             colorInFocus = getColor(
@@ -87,6 +90,7 @@ class PinView @JvmOverloads constructor(
             radius = getDimension(R.styleable.PinView_radius, RADIUS)
             spaceBetweenCircles = getDimension(R.styleable.PinView_spaceBetweenCircles, SPACE)
             fitToScreen = getBoolean(R.styleable.PinView_fitToScreen, false)
+            animate = getBoolean(R.styleable.PinView_animate, false)
         }
 
         val maxLength = countOfCircles
@@ -96,10 +100,10 @@ class PinView @JvmOverloads constructor(
         var isBackspaceClicked = false
         addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
+                startAnimation()
                 if (!isBackspaceClicked) {
                     enteredPassword.append(s.toString().last())
                     Log.d("debug", "key = $enteredPassword")
-                    postInvalidate()
                     if (enteredPassword.length == countOfCircles) {
                         Toast.makeText(
                             context,
@@ -127,10 +131,11 @@ class PinView @JvmOverloads constructor(
 
     override fun onFocusChange(v: View?, hasFocus: Boolean) {
         if (hasFocus) {
-            Log.d("debug", "has focus")
+            Log.d("debug", "focus")
+            if (enteredPassword.isEmpty()) startAnimation()
             showKeyboard()
         } else {
-            Log.d("debug", "has NOT focus")
+            Log.d("debug", "NOT focus")
             hideSoftKeyboard()
         }
     }
@@ -196,16 +201,23 @@ class PinView @JvmOverloads constructor(
         }
 
         /**
-         * Вычисляем начальный отступ слева и справа
+         * Вычисляем отступ до краев вьюшки слева и справа
          */
         if ((spaceBetweenCircles * (countOfCircles - 1) + 2 * radius * countOfCircles) < (widthMeasured - paddingLeft - paddingRight)) {
             dxStart =
                 (widthMeasured - paddingLeft - paddingRight - (spaceBetweenCircles * (countOfCircles - 1) + 2 * radius * countOfCircles)) / 2
         }
 
+        radiusCurrent = radius
+
 
         //Обязательный вызов в конце метода onMeasure
         setMeasuredDimension(widthMeasured, heightMeasured)
+    }
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+        if (animate) animator = createAnimator()
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -247,12 +259,18 @@ class PinView @JvmOverloads constructor(
     private fun drawCircleInFocus(canvas: Canvas?, dx: Float) {
         paint.style = Paint.Style.FILL
         paint.color = colorEmpty
-        canvas?.drawCircle(radius + dx, height / 2.toFloat(), radius, paint)
+        canvas?.drawCircle(radius + dx, height / 2.toFloat(), radiusCurrent, paint)
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = radius / 8
         paint.color = colorInFocus
-        canvas?.drawCircle(radius + dx, height / 2.toFloat(), radius - paint.strokeWidth / 2, paint)
+        canvas?.drawCircle(
+            radius + dx,
+            height / 2.toFloat(),
+            radiusCurrent - paint.strokeWidth / 2,
+            paint
+        )
     }
+
 
     private fun drawCircleEntered(canvas: Canvas?, dx: Float) {
         paint.style = Paint.Style.FILL
@@ -286,17 +304,26 @@ class PinView @JvmOverloads constructor(
 
         super.onRestoreInstanceState(state.superState)
         enteredPassword = StringBuilder(state.entered)
+
     }
 
     private fun createAnimator(): ValueAnimator {
-        val animator = ValueAnimator.ofInt(0, 10)
-        animator.duration = 2000
-        animator.interpolator = AccelerateDecelerateInterpolator()
+        val animator = ValueAnimator.ofFloat(0f, radius)
+        animator.duration = 100
+        animator.interpolator = AccelerateInterpolator()
         animator.addUpdateListener {
-            ValueAnimator.AnimatorUpdateListener {
-
-            }
+            radiusCurrent = it.animatedValue as Float
+            Log.d("radius", "radiusCurrent = $radiusCurrent")
+            invalidate()
         }
         return animator
+    }
+
+    private fun startAnimation() {
+        if (animate) animator?.start()
+    }
+
+    companion object {
+        private const val COUNT = 4
     }
 }

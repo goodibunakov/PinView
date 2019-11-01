@@ -8,5 +8,6 @@
         <attr name="color_entered" format="color" />
         <attr name="color_empty" format="color" />
         <attr name="fitToScreen" format="boolean" />
+        <attr name="animate" format="boolean" />
     </declare-styleable>
 </resources>

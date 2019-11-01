@@ -17,9 +17,9 @@
         android:layout_centerInParent="true"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
-        android:background="@color/colorPrimaryDark"
         app:countOfCircles="4"
         app:fitToScreen="true"
+        app:animate="true"
         app:radius="80dp"
         app:spaceBetweenCircles="10dp" />
 
