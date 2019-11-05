@@ -6,13 +6,13 @@ import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
 
 
-class MainActivity : AppCompatActivity(), PinView.PinEnterCallback {
+class MainActivity : AppCompatActivity(), PinView.PinEnterListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        pinView.callback = this
+        pinView.listener = this
         buttonSendCode.setOnClickListener {
             Toast.makeText(
                 this,

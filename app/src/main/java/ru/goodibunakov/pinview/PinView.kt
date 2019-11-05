@@ -19,7 +19,7 @@ import androidx.core.content.withStyledAttributes
 import android.text.InputFilter
 import android.text.InputType
 import android.text.TextWatcher
-import android.view.animation.AccelerateInterpolator
+import android.view.animation.AccelerateDecelerateInterpolator
 import kotlin.math.min
 
 
@@ -30,12 +30,12 @@ class PinView @JvmOverloads constructor(
 
     constructor(
         context: Context,
-        callback: PinEnterCallback
+        listener: PinEnterListener
     ) : this(context, attrs = null, defStyleAttr = 0) {
-        this.callback = callback
+        this.listener = listener
     }
 
-    interface PinEnterCallback {
+    interface PinEnterListener {
         fun pinEnterFinished(pass: String)
         fun pinNotEntered()
     }
@@ -43,7 +43,7 @@ class PinView @JvmOverloads constructor(
     private val SPACE = 10f
     private val RADIUS = 40f
     private var animator: ValueAnimator? = null
-    var callback: PinEnterCallback? = null
+    var listener: PinEnterListener? = null
 
     var colorInFocus = 0
     var colorEntered = 0
@@ -110,10 +110,10 @@ class PinView @JvmOverloads constructor(
                             "Введен пароль $enteredPassword",
                             Toast.LENGTH_SHORT
                         ).show()
-                        callback?.pinEnterFinished(enteredPassword.toString())
+                        listener?.pinEnterFinished(enteredPassword.toString())
                     }
                 } else {
-                    callback?.pinNotEntered()
+                    listener?.pinNotEntered()
                     if (enteredPassword.isNotEmpty()) {
                         enteredPassword.deleteCharAt(enteredPassword.length - 1)
                     }
@@ -309,11 +309,11 @@ class PinView @JvmOverloads constructor(
 
     private fun createAnimator(): ValueAnimator {
         val animator = ValueAnimator.ofFloat(0f, radius)
-        animator.duration = 100
-        animator.interpolator = AccelerateInterpolator()
+        animator.duration = resources.getInteger(android.R.integer.config_shortAnimTime).toLong()  //200ms
+        Log.d("debug", "duration = ${animator.duration}")
+        animator.interpolator = AccelerateDecelerateInterpolator()
         animator.addUpdateListener {
             radiusCurrent = it.animatedValue as Float
-            Log.d("radius", "radiusCurrent = $radiusCurrent")
             invalidate()
         }
         return animator
